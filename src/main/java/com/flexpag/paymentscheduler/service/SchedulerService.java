@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class SchedulerService {
@@ -17,11 +18,15 @@ public class SchedulerService {
     @Autowired
     private SchedulerRepository schedulerRepository;
 
-    public ResponseResgisterSchedulerDTO save(RegisterSchedulerDTO days){
-        var paymentScheduler = new PaymentScheduler();
-        paymentScheduler.setStatus(PaymentStatus.PENDING);
-        paymentScheduler.setCreatedAt(LocalDateTime.now());
-        paymentScheduler.setExpiredAt(paymentScheduler.getCreatedAt().plusDays(days.getDays()));
+    public ResponseResgisterSchedulerDTO save(RegisterSchedulerDTO dto){
+        if(dto.getDate().isBefore(LocalDateTime.now())){
+            throw new RuntimeException("Por favor, insira uma data futura.");
+        }
+        var paymentScheduler = PaymentScheduler.builder()
+                .status(PaymentStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .expiredAt(dto.getDate())
+                .build();
         var id = schedulerRepository.save(paymentScheduler).getId();
         return new ResponseResgisterSchedulerDTO(id);
     }
@@ -32,4 +37,18 @@ public class SchedulerService {
                 .getStatus();
         return new ResponseStatusSchedulerDTO(status);
     }
+
+    public Optional<PaymentScheduler> searchById(Long id){
+        return schedulerRepository.findById(id);
+    }
+
+    public void deleteById(Long id){
+        if (searchStatusById(id).getStatus().equals(PaymentStatus.PENDING)){
+            searchById(id).orElseThrow(() -> new RuntimeException("Cliente não encontrado!"));
+            schedulerRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Não é possível deletar agendamentos pagos.");
+        }
+    }
+
 }

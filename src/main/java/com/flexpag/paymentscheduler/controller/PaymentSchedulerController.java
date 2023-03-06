@@ -17,9 +17,12 @@ public class PaymentSchedulerController {
     private SchedulerService schedulerService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseResgisterSchedulerDTO save(@RequestBody RegisterSchedulerDTO registerSchedulerDTO){
-        return schedulerService.save(registerSchedulerDTO);
+    public ResponseEntity<Object> save(@RequestBody RegisterSchedulerDTO registerSchedulerDTO){
+        try {
+            return ResponseEntity.ok(schedulerService.save(registerSchedulerDTO));
+        } catch (RuntimeException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/{id}/status")
@@ -30,4 +33,16 @@ public class PaymentSchedulerController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deleteById(@PathVariable Long id){
+        try {
+            schedulerService.deleteById(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
 }
