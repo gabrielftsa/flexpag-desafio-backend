@@ -2,6 +2,7 @@ package com.flexpag.paymentscheduler.service;
 
 import com.flexpag.paymentscheduler.DTO.RegisterSchedulerDTO;
 import com.flexpag.paymentscheduler.DTO.ResponseResgisterSchedulerDTO;
+import com.flexpag.paymentscheduler.DTO.ResponseStatusSchedulerDTO;
 import com.flexpag.paymentscheduler.entity.PaymentScheduler;
 import com.flexpag.paymentscheduler.enums.PaymentStatus;
 import com.flexpag.paymentscheduler.repository.SchedulerRepository;
@@ -23,5 +24,12 @@ public class SchedulerService {
         paymentScheduler.setExpiredAt(paymentScheduler.getCreatedAt().plusDays(days.getDays()));
         var id = schedulerRepository.save(paymentScheduler).getId();
         return new ResponseResgisterSchedulerDTO(id);
+    }
+
+    public ResponseStatusSchedulerDTO searchStatusById(Long id){
+        var status = schedulerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado!"))
+                .getStatus();
+        return new ResponseStatusSchedulerDTO(status);
     }
 }
