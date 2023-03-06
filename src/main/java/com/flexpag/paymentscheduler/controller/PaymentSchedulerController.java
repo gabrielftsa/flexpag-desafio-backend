@@ -2,10 +2,8 @@ package com.flexpag.paymentscheduler.controller;
 
 
 import com.flexpag.paymentscheduler.DTO.RegisterSchedulerDTO;
-import com.flexpag.paymentscheduler.DTO.ResponseResgisterSchedulerDTO;
 import com.flexpag.paymentscheduler.service.SchedulerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +14,7 @@ public class PaymentSchedulerController {
     @Autowired
     private SchedulerService schedulerService;
 
-    @PostMapping
+    @PostMapping()
     public ResponseEntity<Object> save(@RequestBody RegisterSchedulerDTO registerSchedulerDTO){
         try {
             return ResponseEntity.ok(schedulerService.save(registerSchedulerDTO));
@@ -43,6 +41,13 @@ public class PaymentSchedulerController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody RegisterSchedulerDTO newDate, @PathVariable Long id){
+        try {
+            schedulerService.updateSchedulerDate(id, newDate);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

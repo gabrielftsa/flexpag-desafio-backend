@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -31,24 +32,30 @@ public class SchedulerService {
         return new ResponseResgisterSchedulerDTO(id);
     }
 
-    public ResponseStatusSchedulerDTO searchStatusById(Long id){
-        var status = schedulerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado!"))
-                .getStatus();
-        return new ResponseStatusSchedulerDTO(status);
-    }
-
     public Optional<PaymentScheduler> searchById(Long id){
         return schedulerRepository.findById(id);
     }
 
-    public void deleteById(Long id){
-        if (searchStatusById(id).getStatus().equals(PaymentStatus.PENDING)){
-            searchById(id).orElseThrow(() -> new RuntimeException("Cliente não encontrado!"));
-            schedulerRepository.deleteById(id);
-        } else {
-            throw new RuntimeException("Não é possível deletar agendamentos pagos.");
-        }
+    public ResponseStatusSchedulerDTO searchStatusById(Long id){
+        var paymentScheduler = schedulerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+        return new ResponseStatusSchedulerDTO(paymentScheduler.getStatus(), paymentScheduler.getExpiredAt());
     }
 
+    public void deleteById(Long id){
+        searchById(id).orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+        if (searchStatusById(id).getStatus().equals(PaymentStatus.PAID)) {
+            throw new RuntimeException("Não é possível deletar agendamentos pagos.");
+        }
+        schedulerRepository.deleteById(id);
+    }
+
+    public void updateSchedulerDate(Long id, RegisterSchedulerDTO newDate){
+        var paymentScheduler = searchById(id).orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+        if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
+            throw new RuntimeException("Não é possível atualizar a data de agendamentos pagos.");
+        }
+        paymentScheduler.setExpiredAt(newDate.getDate());
+        schedulerRepository.save(paymentScheduler);
+    }
 }
