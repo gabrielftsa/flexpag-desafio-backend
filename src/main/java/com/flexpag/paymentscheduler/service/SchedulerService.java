@@ -20,7 +20,7 @@ public class SchedulerService {
     private SchedulerRepository schedulerRepository;
 
     public ResponseResgisterSchedulerDTO save(RegisterSchedulerDTO dto){
-        if(dto.getDate().isBefore(LocalDateTime.now())){
+        if (dto.getDate().isBefore(LocalDateTime.now())){
             throw new RuntimeException("Por favor, insira uma data futura.");
         }
         var paymentScheduler = PaymentScheduler.builder()
@@ -32,30 +32,42 @@ public class SchedulerService {
         return new ResponseResgisterSchedulerDTO(id);
     }
 
-    public Optional<PaymentScheduler> searchById(Long id){
-        return schedulerRepository.findById(id);
+    public PaymentScheduler searchById(Long id){
+        return schedulerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
     }
 
     public ResponseStatusSchedulerDTO searchStatusById(Long id){
-        var paymentScheduler = schedulerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+        var paymentScheduler = searchById(id);
         return new ResponseStatusSchedulerDTO(paymentScheduler.getStatus(), paymentScheduler.getExpiredAt());
     }
 
     public void deleteById(Long id){
-        searchById(id).orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
-        if (searchStatusById(id).getStatus().equals(PaymentStatus.PAID)) {
+        var paymentScheduler = searchById(id);
+        if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
             throw new RuntimeException("Não é possível deletar agendamentos pagos.");
         }
         schedulerRepository.deleteById(id);
     }
 
     public void updateSchedulerDate(Long id, RegisterSchedulerDTO newDate){
-        var paymentScheduler = searchById(id).orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+        var paymentScheduler = searchById(id);
         if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
             throw new RuntimeException("Não é possível atualizar a data de agendamentos pagos.");
         }
         paymentScheduler.setExpiredAt(newDate.getDate());
+        schedulerRepository.save(paymentScheduler);
+    }
+
+    public void payScheduler(Long id){
+        var paymentScheduler = searchById(id);
+        if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
+            throw new RuntimeException("Não é possível pagar um agendamento pago.");
+        }
+        if (LocalDateTime.now().isAfter(paymentScheduler.getExpiredAt())) {
+            throw new RuntimeException("Não é possível pagar um agendamento expirado.");
+        }
+        paymentScheduler.setStatus(PaymentStatus.PAID);
         schedulerRepository.save(paymentScheduler);
     }
 }

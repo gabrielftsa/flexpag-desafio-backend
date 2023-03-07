@@ -41,10 +41,21 @@ public class PaymentSchedulerController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<Object> update(@RequestBody RegisterSchedulerDTO newDate, @PathVariable Long id){
         try {
             schedulerService.updateSchedulerDate(id, newDate);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/pay/{id}")
+    public ResponseEntity<Object> payScheduler(@PathVariable Long id){
+        try {
+            schedulerService.payScheduler(id);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
