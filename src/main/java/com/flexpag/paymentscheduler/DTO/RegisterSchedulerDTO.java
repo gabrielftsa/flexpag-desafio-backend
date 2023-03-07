@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class RegisterSchedulerDTO {
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime date;

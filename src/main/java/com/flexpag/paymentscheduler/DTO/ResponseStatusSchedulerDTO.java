@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResponseStatusSchedulerDTO {
-
     private PaymentStatus status;
 
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")

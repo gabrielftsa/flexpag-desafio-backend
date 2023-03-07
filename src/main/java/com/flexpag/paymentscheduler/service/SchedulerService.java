@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.Optional;
 
 @Service
 public class SchedulerService {
@@ -32,11 +30,6 @@ public class SchedulerService {
         return new ResponseResgisterSchedulerDTO(id);
     }
 
-    public PaymentScheduler searchById(Long id){
-        return schedulerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
-    }
-
     public ResponseStatusSchedulerDTO searchStatusById(Long id){
         var paymentScheduler = searchById(id);
         return new ResponseStatusSchedulerDTO(paymentScheduler.getStatus(), paymentScheduler.getExpiredAt());
@@ -44,30 +37,39 @@ public class SchedulerService {
 
     public void deleteById(Long id){
         var paymentScheduler = searchById(id);
-        if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
-            throw new RuntimeException("Não é possível deletar agendamentos pagos.");
-        }
+        verifyPayment(paymentScheduler);
         schedulerRepository.deleteById(id);
     }
 
     public void updateSchedulerDate(Long id, RegisterSchedulerDTO newDate){
         var paymentScheduler = searchById(id);
-        if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
-            throw new RuntimeException("Não é possível atualizar a data de agendamentos pagos.");
-        }
+        verifyPayment(paymentScheduler);
         paymentScheduler.setExpiredAt(newDate.getDate());
         schedulerRepository.save(paymentScheduler);
     }
 
     public void payScheduler(Long id){
         var paymentScheduler = searchById(id);
-        if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
-            throw new RuntimeException("Não é possível pagar um agendamento pago.");
-        }
+        verifyPayment(paymentScheduler);
+
+        // Verifica se a data de agendamento está expirada
         if (LocalDateTime.now().isAfter(paymentScheduler.getExpiredAt())) {
             throw new RuntimeException("Não é possível pagar um agendamento expirado.");
         }
         paymentScheduler.setStatus(PaymentStatus.PAID);
         schedulerRepository.save(paymentScheduler);
+    }
+
+    private void verifyPayment(PaymentScheduler paymentScheduler){
+
+        // Verifica se meu status de pagamento está pago
+        if (paymentScheduler.getStatus().equals(PaymentStatus.PAID)) {
+            throw new RuntimeException("Não é possível atualizar a data de agendamentos pagos.");
+        }
+    }
+
+    private PaymentScheduler searchById(Long id){
+        return schedulerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
     }
 }
